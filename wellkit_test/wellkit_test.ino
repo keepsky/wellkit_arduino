@@ -1,3 +1,19 @@
+/*
+ Wellkit project
+ By: Joonho Park
+ Sungkyunkwan University
+ Date: July 19th, 2024
+ License: This code is public domain but you buy me a beer if you use this and we meet someday (Beerware license).
+ Github : https://github.com/keepsky/wellkit_arduino/tree/main
+ 
+ Arduino pin 
+   2 -> HX711 CLK
+   3 -> DOUT
+   5V -> VCC
+   GND -> GND 
+ 
+*/
+
 
 #include <EEPROM.h> 
 #include "HX711.h"
