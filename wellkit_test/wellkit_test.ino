@@ -1,3 +1,5 @@
+
+#include <EEPROM.h> 
 #include "HX711.h"
 
 //#define CALIBRATION_MODE
@@ -7,7 +9,7 @@
 #define CLK   2
 HX711 scale(DOUT, CLK);
 
-float calibration_factor = -14;
+long calibration_factor = -14;
 
 #ifdef CALIBRATION_MODE
 float units;
@@ -16,6 +18,9 @@ float ounces;
 
 void setup() 
 {
+  // read EEPROM
+  calibration_factor = get_eeprom();
+
   pinMode(LED_BUILTIN, OUTPUT);
   delay(2000);
   Serial.begin(9600);
@@ -33,7 +38,6 @@ void setup()
   Serial.print("Zero factor: "); //This can be used to remove the need to tare the scale. Useful in permanent scale projects.
   Serial.println(zero_factor);
 #endif
-
 
 }
 
@@ -62,6 +66,7 @@ void loop()
     } else if (cmd == '4'){         // set calibration value
       int cal = Serial.parseInt();
       calibration_factor = cal;
+      set_eeprom(calibration_factor);
       scale.set_scale(calibration_factor); //Adjust to this calibration factor
       //Serial.println(calibration_factor);
     } else if (cmd == '5'){         // get calibration value
@@ -84,6 +89,31 @@ void blink_builtin_led(int duration, int num)
     delay(duration);               
   }
 }
+
+long get_eeprom(void)
+{
+  long val;
+  char *p = (char*)&val;
+
+  for(int i=0;i<8;i++)
+  {
+    *p++ = EEPROM.read(i);
+  }
+
+  return val;
+}
+
+void set_eeprom(long val)
+{
+  char *p = (char*)&val;
+
+  for(int i=0;i<8;i++)
+  {
+    EEPROM.write(i, *p++);
+  }
+}
+
+
 
 #ifdef CALIBRATI1ON_MODE
 void calibration_mode(void)
