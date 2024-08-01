@@ -18,7 +18,7 @@ float ounces;
 
 void setup() 
 {
-  // read EEPROM
+  // read calibration value from EEPROM
   calibration_factor = get_eeprom();
 
   pinMode(LED_BUILTIN, OUTPUT);
@@ -55,10 +55,10 @@ void loop()
     if (cmd == '1') {               // get weight
       //Serial.println("120");
       // load cell에서 무게 정보를 읽어와서 출력하는 코드 필요
-      blink_builtin_led(300, 2);
+      blink_builtin_led(50, 1);
       Serial.println(scale.get_units(), 2);
     } else if (cmd == '2'){         // moving trailer
-      blink_builtin_led(300, 3);
+      blink_builtin_led(50, 3);
       Serial.println("moving trailer");
       // Relay 스위치를 통해서 모터를 구동시키는 코드 필요
     } else if (cmd == '3'){         // get calibration value
@@ -68,6 +68,7 @@ void loop()
       calibration_factor = cal;
       set_eeprom(calibration_factor);
       scale.set_scale(calibration_factor); //Adjust to this calibration factor
+      scale.tare();
       //Serial.println(calibration_factor);
     } else if (cmd == '5'){         // get zero factor value
       long zero_factor = scale.read_average();
