@@ -19,7 +19,7 @@
 #include "HX711.h"
 
 //#define CALIBRATION_MODE
-
+#define LBS_TO_GRAM   (453.6)
 
 #define DOUT  3
 #define CLK   2
@@ -42,8 +42,8 @@ void setup()
   Serial.begin(9600);
   delay(2000);
   //while(!Serial) ;    // 연결을 기다립니다.
-  scale.set_scale(calibration_factor);
-  scale.tare();
+  scale.set_scale(calibration_factor);  //This value is obtained by using calibration step
+  scale.tare();   //Assuming there is no weight on the scale at start up, reset the scale to 0
 
 #ifdef CALIBRATION_MODE
   Serial.println("HX711 scale test");
@@ -68,29 +68,50 @@ void loop()
   if(Serial.available()){
     cmd = Serial.read();
     blink_builtin_led(100, 1);
-    if (cmd == '1') {               // get weight
-      //Serial.println("120");
+
+
+    // get weight
+    if (cmd == '1') {               
       // load cell에서 무게 정보를 읽어와서 출력하는 코드 필요
       blink_builtin_led(50, 1);
-      Serial.println(scale.get_units(), 2);
-    } else if (cmd == '2'){         // moving trailer
+      int weight = scale.get_units();
+      weight = (float)weight * LBS_TO_GRAM;
+      Serial.println(weight, 1);
+
+
+    // moving trailer
+    } else if (cmd == '2'){         
       blink_builtin_led(50, 3);
       Serial.println("moving trailer");
-      // Relay 스위치를 통해서 모터를 구동시키는 코드 필요
-    } else if (cmd == '3'){         // get calibration value
+      // TODO : Relay 스위치를 통해서 모터를 구동시키는 코드 필요
+
+
+    // get calibration value
+    } else if (cmd == '3'){         
       Serial.println(calibration_factor);
-    } else if (cmd == '4'){         // set calibration value
+
+
+    // set calibration value
+    } else if (cmd == '4'){         
       int cal = Serial.parseInt();
       calibration_factor = cal;
       set_eeprom(calibration_factor);
       scale.set_scale(calibration_factor); //Adjust to this calibration factor
-      scale.tare();
+      //scale.tare();
       //Serial.println(calibration_factor);
-    } else if (cmd == '5'){         // get zero factor value
+
+
+    // get zero factor value
+    } else if (cmd == '5'){         
       long zero_factor = scale.read_average();
       Serial.println(zero_factor);
+
+
+    // otherwise
     } else {
       Serial.println("error");
+
+
     }
     delay(100);
   }
