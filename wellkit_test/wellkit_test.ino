@@ -69,7 +69,7 @@ void loop()
       set_eeprom(calibration_factor);
       scale.set_scale(calibration_factor); //Adjust to this calibration factor
       //Serial.println(calibration_factor);
-    } else if (cmd == '5'){         // get calibration value
+    } else if (cmd == '5'){         // get zero factor value
       long zero_factor = scale.read_average();
       Serial.println(zero_factor);
     } else {
