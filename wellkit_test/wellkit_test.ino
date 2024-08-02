@@ -101,8 +101,15 @@ void loop()
       //Serial.println(calibration_factor);
 
 
-    // get zero factor value
+    // 현재 calibration 값으로 영점 조정(tare)
+    // 무게 센서 위에 아무것도 올려 놓지 않은 상태에서 진행해야함
     } else if (cmd == '5'){         
+      scale.set_scale(calibration_factor); //Adjust to this calibration factor
+      scale.tare();
+
+
+    // get zero factor value
+    } else if (cmd == '9'){         
       long zero_factor = scale.read_average();
       Serial.println(zero_factor);
 
