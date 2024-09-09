@@ -23,17 +23,17 @@
 
 #define DOUT  3
 #define CLK   2
-HX711 scale(DOUT, CLK);
+//HX711 scale(DOUT, CLK);
+HX711 scale;
 
-long calibration_factor = -14;
+float calibration_factor = 12000;
 
-#ifdef CALIBRATION_MODE
-float units;
-float ounces;
-#endif
+
 
 void setup() 
 {
+  scale.begin(DOUT, CLK);
+
   // read calibration value from EEPROM
   calibration_factor = get_eeprom();
 
@@ -42,28 +42,17 @@ void setup()
   Serial.begin(9600);
   delay(2000);
   //while(!Serial) ;    // 연결을 기다립니다.
+  
   scale.set_scale(calibration_factor);  //This value is obtained by using calibration step
-  scale.tare();   //Assuming there is no weight on the scale at start up, reset the scale to 0
-
-#ifdef CALIBRATION_MODE
-  Serial.println("HX711 scale test");
-  Serial.print("factor : ");
-  Serial.println(calibration_factor);
-
-  long zero_factor = scale.read_average(); //Get a baseline reading
-  Serial.print("Zero factor: "); //This can be used to remove the need to tare the scale. Useful in permanent scale projects.
-  Serial.println(zero_factor);
-#endif
+  //scale.tare();   //Assuming there is no weight on the scale at start up, reset the scale to 0
 
 }
+
+//#define ORG
 
 char cmd;
 void loop() 
 {
-#ifdef CALIBRATION_MODE
-  calibration_mode();
-#endif
-
   // put your main code here, to run repeatedly:
   if(Serial.available()){
     cmd = Serial.read();
@@ -74,8 +63,8 @@ void loop()
     if (cmd == '1') {               
       // load cell에서 무게 정보를 읽어와서 출력하는 코드 필요
       blink_builtin_led(50, 1);
-      int weight = scale.get_units();
-      weight = (float)weight * LBS_TO_GRAM;
+      float weight = scale.get_units(5);
+      weight = weight * LBS_TO_GRAM;
       Serial.println(weight, 1);
 
 
@@ -91,6 +80,7 @@ void loop()
       Serial.println(calibration_factor);
 
 
+#ifdef ORG
     // set calibration value
     } else if (cmd == '4'){         
       int cal = Serial.parseInt();
@@ -99,14 +89,37 @@ void loop()
       scale.set_scale(calibration_factor); //Adjust to this calibration factor
       //scale.tare();
       //Serial.println(calibration_factor);
+#else
+    } else if (cmd == '4'){         
+      //scale.set_scale(); //Adjust to this calibration factor
+      scale.tare(20);   
+      Serial.println("OK");
+#endif
 
-
+#ifdef ORG
     // 현재 calibration 값으로 영점 조정(tare)
     // 무게 센서 위에 아무것도 올려 놓지 않은 상태에서 진행해야함
     } else if (cmd == '5'){         
       scale.set_scale(calibration_factor); //Adjust to this calibration factor
       scale.tare();
+#else
+    } else if (cmd == '5'){         
+      int weight = Serial.parseInt();
+      scale.calibrate_scale(weight, 20);
+      calibration_factor = scale.get_scale();
+      scale.set_scale(calibration_factor);
+      set_eeprom(calibration_factor);
+      Serial.println(calibration_factor);
 
+#ifdef ORG
+      int cal = Serial.parseInt();
+      long value = LBS_TO_GRAM * scale.get_units(5);
+      calibration_factor = value/cal;
+      scale.set_scale(calibration_factor);
+      set_eeprom(calibration_factor);
+      Serial.println(calibration_factor);
+#endif      
+#endif
 
     // get zero factor value
     } else if (cmd == '9'){         
@@ -135,9 +148,9 @@ void blink_builtin_led(int duration, int num)
   }
 }
 
-long get_eeprom(void)
+float get_eeprom(void)
 {
-  long val;
+  float val;
   char *p = (char*)&val;
 
   for(int i=0;i<8;i++)
@@ -148,7 +161,7 @@ long get_eeprom(void)
   return val;
 }
 
-void set_eeprom(long val)
+void set_eeprom(float val)
 {
   char *p = (char*)&val;
 
@@ -160,38 +173,3 @@ void set_eeprom(long val)
 
 
 
-#ifdef CALIBRATI1ON_MODE
-void calibration_mode(void)
-{
-  while(1)
-  {
-    scale.set_scale(calibration_factor); //Adjust to this calibration factor
-
-    Serial.print("Reading: ");
-    units = scale.get_units(), 10;
-    if (units < 0)
-    {
-      units = 0.00;
-    }
-    ounces = units * 0.035274;
-    Serial.print(units);
-    Serial.print(" grams"); 
-    Serial.print(" calibration_factor: ");
-    Serial.print(calibration_factor);
-    Serial.println();
-
-    if(Serial.available())
-    {
-      char temp = Serial.read();
-      if(temp == '+')
-        calibration_factor += 1;
-      else if(temp == '-')
-        calibration_factor -= 1;
-      else if(temp == 'a')
-        calibration_factor += 10;
-      else if(temp == 'z')
-        calibration_factor -= 10;
-    }
-  }
-}
-#endif
