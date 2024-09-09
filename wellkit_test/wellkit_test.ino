@@ -14,7 +14,7 @@
  
 */
 
-
+#include <Stepper.h>
 #include <EEPROM.h> 
 #include "HX711.h"
 
@@ -36,6 +36,10 @@ HX711 scale;
 
 float calibration_factor = 120000;
 int status;
+
+
+int stepsPerRevolution = 1024;
+Stepper myStepper(stepsPerRevolution,11,9,10,8); 
 
 void setup() 
 {
@@ -62,6 +66,9 @@ void setup()
     calibration_factor = get_eeprom_calibration();  
     scale.set_scale(calibration_factor);  //This value is obtained by using calibration step
   }
+
+  myStepper.setSpeed(30); 
+
 }
 
 char cmd;
@@ -102,11 +109,15 @@ void loop()
 
 
     // Open Cover
-    } else if (cmd == '5'){         
+    } else if (cmd == '5'){        
+      myStepper.step(stepsPerRevolution);
+      delay(1000); 
       Serial.println("Open Cover");
 
     // Close Cover
     } else if (cmd == '6'){         
+      myStepper.step(-stepsPerRevolution);
+      delay(1000); 
       Serial.println("Close Cover");
 
     // Get Cover status
