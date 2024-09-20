@@ -7,10 +7,15 @@
  Github : https://github.com/keepsky/wellkit_arduino/tree/main
  
  Arduino pin 
-   2 -> HX711 CLK
-   3 -> DOUT
-   5V -> VCC
-   GND -> GND 
+   D2 -> HX711 CLK
+   D3 -> HX711 DOUT
+   5V -> VCC 
+
+   D7 -> L298N IN2
+   D8 -> L298N IN1
+   D9 -> L298N ENA (PWM)
+   5V -> L298N_5V (note) or VIN <- L298N_5V   
+   GND -> GND (from external power source) 
  
 */
 
@@ -26,7 +31,7 @@
 #define L298N_IN2   7
 
 #define MOTOR_SPEED 255
-#define MOTOR_DELAY 1000
+#define MOTOR_DELAY 500
 
 #define ADDR_CALIBRATION  0
 #define ADDR_CAL_STATUS   10
