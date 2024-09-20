@@ -14,11 +14,19 @@
  
 */
 
-#include <Stepper.h>
 #include <EEPROM.h> 
 #include "HX711.h"
 
 #define DEBUG
+
+#define HX711_DOUT  3
+#define HX711_CLK   2
+#define L298N_ENA   9 // PWM
+#define L298N_IN1   8
+#define L298N_IN2   7
+
+#define MOTOR_SPEED 255
+#define MOTOR_DELAY 1000
 
 #define ADDR_CALIBRATION  0
 #define ADDR_CAL_STATUS   10
@@ -29,17 +37,11 @@
 #define LBS_TO_GRAM   (453.6)
 
 
-#define DOUT  3
-#define CLK   2
-
 HX711 scale;
 
 float calibration_factor = 120000;
 int status;
 
-
-int stepsPerRevolution = 1024;
-Stepper myStepper(stepsPerRevolution,11,9,10,8); 
 
 void setup() 
 {
@@ -48,7 +50,9 @@ void setup()
 
   pinMode(LED_BUILTIN, OUTPUT);
 
-  scale.begin(DOUT, CLK);
+  motor_init();
+
+  scale.begin(HX711_DOUT, HX711_CLK);
 
   status = EEPROM.read(ADDR_CAL_STATUS);
 
@@ -67,8 +71,6 @@ void setup()
     scale.set_scale(calibration_factor);  //This value is obtained by using calibration step
   }
 
-  myStepper.setSpeed(30); 
-
 }
 
 char cmd;
@@ -83,7 +85,6 @@ void loop()
     // get weight
     if (cmd == '1') {               
       // load cell에서 무게 정보를 읽어와서 출력하는 코드 필요
-      blink_builtin_led(50, 1);
       float weight = scale.get_units(5);
       weight = weight * LBS_TO_GRAM;
       Serial.println(weight, 1);
@@ -95,8 +96,9 @@ void loop()
     } else if (cmd == '3'){         
       scale.set_scale();
       scale.tare(); //Reset the scale to 0
+#ifdef DEBUG  
       Serial.println("OK");
-
+#endif
     // set calibration value
     } else if (cmd == '4'){         
       float value = Serial.parseFloat();
@@ -110,32 +112,31 @@ void loop()
 
     // Open Cover
     } else if (cmd == '5'){        
-      myStepper.step(stepsPerRevolution);
-      delay(1000); 
+      motor_open();
+#ifdef DEBUG  
       Serial.println("Open Cover");
-
+#endif
     // Close Cover
     } else if (cmd == '6'){         
-      myStepper.step(-stepsPerRevolution);
-      delay(1000); 
+      motor_close();
+#ifdef DEBUG  
       Serial.println("Close Cover");
-
+#endif
     // Get Cover status
     } else if (cmd == '7'){         
+#ifdef DEBUG  
       Serial.println("get cover status");
-
-
+#endif
     // get zero factor value
     } else if (cmd == '9'){         
       long zero_factor = scale.read_average();
       Serial.println(zero_factor);
 
-
     // otherwise
     } else {
+#ifdef DEBUG  
       Serial.println("error");
-
-
+#endif
     }
     delay(100);
   }
@@ -175,6 +176,37 @@ void set_eeprom_calibration(float val)
   }
 
   EEPROM.write(ADDR_CAL_STATUS, CAL_STATUS_OK);
+}
+
+void motor_init(void)
+{
+  pinMode(L298N_ENA, OUTPUT);
+  pinMode(L298N_IN1, OUTPUT);
+  pinMode(L298N_IN2, OUTPUT);
+
+  digitalWrite(L298N_IN1, LOW);
+  digitalWrite(L298N_IN2, LOW);
+  analogWrite(L298N_ENA, 0);
+}
+
+void motor_open(void)
+{
+  digitalWrite(L298N_IN1, HIGH);
+  digitalWrite(L298N_IN2, LOW);
+  analogWrite(L298N_ENA, MOTOR_SPEED);
+  delay(MOTOR_DELAY);
+  analogWrite(L298N_ENA, 0);
+  delay(MOTOR_DELAY);  
+}
+
+void motor_close(void)
+{
+  digitalWrite(L298N_IN1, LOW);
+  digitalWrite(L298N_IN2, HIGH);
+  analogWrite(L298N_ENA, MOTOR_SPEED);
+  delay(MOTOR_DELAY);
+  analogWrite(L298N_ENA, 0);
+  delay(MOTOR_DELAY);  
 }
 
 
