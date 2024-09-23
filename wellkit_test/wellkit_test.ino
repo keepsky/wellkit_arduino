@@ -84,7 +84,9 @@ void loop()
   // put your main code here, to run repeatedly:
   if(Serial.available()){
     cmd = Serial.read();
+#ifdef DEBUG 
     blink_builtin_led(100, 1);
+#endif    
 
 
     // get weight
@@ -147,6 +149,7 @@ void loop()
   }
 }
 
+#ifdef DEBUG 
 void blink_builtin_led(int duration, int num)
 {
   for(int i=0;i<num;i++)
@@ -157,6 +160,7 @@ void blink_builtin_led(int duration, int num)
     delay(duration);               
   }
 }
+#endif
 
 float get_eeprom_calibration()
 {
@@ -200,6 +204,9 @@ void motor_open(void)
   digitalWrite(L298N_IN2, LOW);
   analogWrite(L298N_ENA, MOTOR_SPEED);
   delay(MOTOR_DELAY);
+#ifdef DEBUG 
+  Serial.println("motor_open(): start slowly");
+#endif
   for (int i = MOTOR_SPEED; i > 0; i--)
   {
     analogWrite(L298N_ENA, i);
@@ -214,6 +221,9 @@ void motor_close(void)
   digitalWrite(L298N_IN2, HIGH);
   analogWrite(L298N_ENA, MOTOR_SPEED);
   delay(MOTOR_DELAY);
+#ifdef DEBUG 
+  Serial.println("motor_close(): start slowly");
+#endif
   for (int i = MOTOR_SPEED; i > 0; i--)
   {
     analogWrite(L298N_ENA, i);
