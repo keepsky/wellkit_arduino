@@ -22,6 +22,7 @@
 #include <EEPROM.h> 
 #include "HX711.h"
 
+#define VERSION   101
 #define DEBUG
 
 #define HX711_DOUT  3
@@ -33,18 +34,21 @@
 #define MOTOR_SPEED 128
 #define MOTOR_DELAY 500
 
-#define ADDR_CALIBRATION  0
-#define ADDR_CAL_STATUS   10
-
-#define CAL_STATUS_NONE   0
-#define CAL_STATUS_OK     0xAA
-
 #define LBS_TO_GRAM   (453.6)
 
+struct wellkit {
+  int version;
+  float scala;
+  long offSet;
+};
+
+struct wellkit data;
 
 HX711 scale;
 
-float calibration_factor = 120000;
+float factor = 246.84;
+long offset = -239664;
+
 int status;
 
 void(* reset_func) (void) = 0;
@@ -60,21 +64,22 @@ void setup()
 
   scale.begin(HX711_DOUT, HX711_CLK);
 
-  status = EEPROM.read(ADDR_CAL_STATUS);
+  data = load_struct(0);
 
-  if(status == CAL_STATUS_OK)
+  if(data.version == VERSION)
   {
 #ifdef DEBUG  
     Serial.print("status : ");
     Serial.println(status);
-    Serial.print("Calibration value is valid : ");
-    Serial.println(calibration_factor);
+    Serial.println("Calibration value is valid : ");
+    Serial.print("scala : ");
+    Serial.println(data.scala);
+    Serial.print("offset : ");
+    Serial.println(data.offSet);
 #endif
 
-    // read calibration value from EEPROM
-    calibration_factor = get_eeprom_calibration();  
-    scale.set_scale(calibration_factor);  //This value is obtained by using calibration step
-    scale.tare(); //Reset the scale to 0
+    scale.set_offset(data.offSet);
+    scale.set_scale(data.scala);
   }
 #ifdef DEBUG  
   else
@@ -94,52 +99,58 @@ void loop()
     blink_builtin_led(100, 1);
 #endif    
 
-
     // get weight
     if (cmd == '1') {               
       // load cell에서 무게 정보를 읽어와서 출력하는 코드 필요
       float weight = scale.get_units(5);
-      weight = weight * LBS_TO_GRAM;
+      //weight = weight * LBS_TO_GRAM;
       Serial.println(weight, 1);
 
-    // get calibration value
+    // get calibration value (scala)
     } else if (cmd == '2'){         
-      Serial.println(calibration_factor);
+      Serial.println(data.scala);
 
+    // get calibration value (offset)
     } else if (cmd == '3'){         
-      scale.set_scale();
-      scale.tare(); //Reset the scale to 0
+      Serial.println(data.offSet);
+
+    // step 1 : calibration with known weight
+    } else if (cmd == '4'){         
+      float value = Serial.parseFloat();
+        scale.tare();
+        data.offSet=scale.get_units(10);
 #ifdef DEBUG  
       Serial.println("OK");
 #endif
 
-    // set calibration value
-    } else if (cmd == '4'){         
-      float value = Serial.parseFloat();
-      calibration_factor = value;
-      set_eeprom_calibration(calibration_factor);
-      scale.set_scale(calibration_factor); //Adjust to this calibration factor
-      Serial.println(calibration_factor);
+    // step 2 : calibration with known weight
+    } else if (cmd == '5'){         
+      int value = Serial.parseInt();
+      proc_calibration(value);
+#ifdef DEBUG  
+      Serial.println("OK");
+#endif
 
     // Open Cover
-    } else if (cmd == '5'){        
+    } else if (cmd == '6'){        
       motor_open();
 #ifdef DEBUG  
       Serial.println("Open Cover");
 #endif
 
     // Close Cover
-    } else if (cmd == '6'){         
+    } else if (cmd == '7'){         
       motor_close();
 #ifdef DEBUG  
       Serial.println("Close Cover");
 #endif
 
     // Get Cover status
-    } else if (cmd == '7'){         
+    } else if (cmd == '8'){         
 #ifdef DEBUG  
       Serial.println("get cover status");
 #endif
+
     // get zero factor value
     } else if (cmd == '9'){         
       long zero_factor = scale.read_average();
@@ -148,6 +159,10 @@ void loop()
     // reset board
     } else if (cmd == '0'){         
       reset_func();
+
+    // get zero factor value
+    } else if (cmd == 'a' || cmd == 'A'){         
+      test_proc_calibration();
 
     // otherwise
     } else {
@@ -171,31 +186,6 @@ void blink_builtin_led(int duration, int num)
   }
 }
 #endif
-
-float get_eeprom_calibration()
-{
-  float val;
-  char *p = (char*)&val;
-
-  for(int i=0;i<8;i++)
-  {
-    *p++ = EEPROM.read(i);
-  }
-
-  return val;
-}
-
-void set_eeprom_calibration(float val)
-{
-  char *p = (char*)&val;
-
-  for(int i=0;i<8;i++)
-  {
-    EEPROM.write(i, *p++);
-  }
-
-  EEPROM.write(ADDR_CAL_STATUS, CAL_STATUS_OK);
-}
 
 void motor_init(void)
 {
@@ -243,4 +233,84 @@ void motor_close(void)
 }
 
 
+void save_struct(int addr, struct wellkit value) {
+  value.version = VERSION;
+  EEPROM.put(addr, value);
+}
+
+struct wellkit load_struct(int addr) {
+  EEPROM.get( addr, data );
+  return data;
+}
+
+
+void proc_calibration(int weight)
+{
+    scale.calibrate_scale(weight, 5);
+    data.scala=scale.get_units(10);
+
+    data.offSet = scale.get_offset();
+    data.scala = scale.get_scale();
+    save_struct(0, data);
+}
+
+
+
+#define OBJECT  500
+
+
+void test_proc_calibration(void)
+{
+    Serial.print("UNITS: ");
+    Serial.println(scale.get_units(10));
+
+    Serial.println("\nEmpty the scale, press a key to continue");
+    while (!Serial.available());
+    while (Serial.available()) Serial.read();
+
+    scale.tare();
+    Serial.print("UNITS: ");
+    data.offSet=scale.get_units(10);
+    Serial.println(data.offSet);
+
+
+    Serial.println("\nPut 1000 gram in the scale, press a key to continue");
+    while (!Serial.available());
+    while (Serial.available()) Serial.read();
+
+    scale.calibrate_scale(OBJECT, 5);
+    Serial.print("UNITS: ");
+    data.scala=scale.get_units(10);
+    Serial.println(data.scala);
+
+    Serial.println("\nScale is calibrated, your calibration values:");
+
+    long scaleOffset = scale.get_offset();
+    Serial.print("\nOffset \t");
+    Serial.println(scaleOffset);
+
+    float scaleFactor = scale.get_scale();
+    Serial.print("Scale \t");
+    Serial.println(scaleFactor);
+
+    Serial.println("\nUse this code for setting zero and calibration factor permanently:");
+
+    Serial.print("\nscale.set_offset(");
+    Serial.print(scaleOffset);
+    Serial.println(");");
+    Serial.print("scale.set_scale(");
+    Serial.print(scaleFactor);
+    Serial.println(");");
+
+    Serial.println("\nPress a key to continue");
+    while (!Serial.available());
+    while (Serial.available()) Serial.read();
+
+//scale.set_offset(-88627);
+//scale.set_scale(101.05);
+
+    data.scala=scaleFactor;
+    data.offSet=scaleOffset; 
+    save_struct(0, data);//Save to eeprom   
+}
 
