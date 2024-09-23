@@ -30,7 +30,7 @@
 #define L298N_IN1   8
 #define L298N_IN2   7
 
-#define MOTOR_SPEED 255
+#define MOTOR_SPEED 128
 #define MOTOR_DELAY 500
 
 #define ADDR_CALIBRATION  0
