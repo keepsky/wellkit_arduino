@@ -200,8 +200,12 @@ void motor_open(void)
   digitalWrite(L298N_IN2, LOW);
   analogWrite(L298N_ENA, MOTOR_SPEED);
   delay(MOTOR_DELAY);
+  for (int i = MOTOR_SPEED; i > 0; i--)
+  {
+    analogWrite(L298N_ENA, i);
+    delay(10);
+  }
   analogWrite(L298N_ENA, 0);
-  delay(MOTOR_DELAY);  
 }
 
 void motor_close(void)
@@ -210,8 +214,12 @@ void motor_close(void)
   digitalWrite(L298N_IN2, HIGH);
   analogWrite(L298N_ENA, MOTOR_SPEED);
   delay(MOTOR_DELAY);
+  for (int i = MOTOR_SPEED; i > 0; i--)
+  {
+    analogWrite(L298N_ENA, i);
+    delay(10);
+  }
   analogWrite(L298N_ENA, 0);
-  delay(MOTOR_DELAY);  
 }
 
 

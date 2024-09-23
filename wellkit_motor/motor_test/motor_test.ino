@@ -4,7 +4,7 @@
 #define L298N_IN1   8
 #define L298N_IN2   7
 
-int motor_speed = 255;
+int motor_speed = 128;
 int motor_delay = 500;
 
 void setup() 
