@@ -47,6 +47,7 @@ HX711 scale;
 float calibration_factor = 120000;
 int status;
 
+void(* reset_func) (void) = 0;
 
 void setup() 
 {
@@ -61,21 +62,26 @@ void setup()
 
   status = EEPROM.read(ADDR_CAL_STATUS);
 
-#ifdef DEBUG  
-  Serial.print("status : ");
-  Serial.println(status);
-#endif
-
   if(status == CAL_STATUS_OK)
   {
-    scale.set_scale();
-    scale.tare(); //Reset the scale to 0
+#ifdef DEBUG  
+    Serial.print("status : ");
+    Serial.println(status);
+    Serial.print("Calibration value is valid : ");
+    Serial.println(calibration_factor);
+#endif
 
     // read calibration value from EEPROM
     calibration_factor = get_eeprom_calibration();  
     scale.set_scale(calibration_factor);  //This value is obtained by using calibration step
+    scale.tare(); //Reset the scale to 0
   }
-
+#ifdef DEBUG  
+  else
+  {
+    Serial.println("Calibration value is invalid. you need to go through calibration");
+  }
+#endif
 }
 
 char cmd;
@@ -106,16 +112,14 @@ void loop()
 #ifdef DEBUG  
       Serial.println("OK");
 #endif
+
     // set calibration value
     } else if (cmd == '4'){         
       float value = Serial.parseFloat();
       calibration_factor = value;
       set_eeprom_calibration(calibration_factor);
-      scale.set_scale();
-      scale.tare(); //Reset the scale to 0
       scale.set_scale(calibration_factor); //Adjust to this calibration factor
       Serial.println(calibration_factor);
-
 
     // Open Cover
     } else if (cmd == '5'){        
@@ -123,12 +127,14 @@ void loop()
 #ifdef DEBUG  
       Serial.println("Open Cover");
 #endif
+
     // Close Cover
     } else if (cmd == '6'){         
       motor_close();
 #ifdef DEBUG  
       Serial.println("Close Cover");
 #endif
+
     // Get Cover status
     } else if (cmd == '7'){         
 #ifdef DEBUG  
@@ -138,6 +144,10 @@ void loop()
     } else if (cmd == '9'){         
       long zero_factor = scale.read_average();
       Serial.println(zero_factor);
+
+    // reset board
+    } else if (cmd == '0'){         
+      reset_func();
 
     // otherwise
     } else {
