@@ -116,7 +116,6 @@ void loop()
 
     // step 1 : calibration with known weight
     } else if (cmd == '4'){         
-      float value = Serial.parseFloat();
         scale.tare();
         data.offSet=scale.get_units(10);
 #ifdef DEBUG  
@@ -127,9 +126,8 @@ void loop()
     } else if (cmd == '5'){         
       int value = Serial.parseInt();
       proc_calibration(value);
-#ifdef DEBUG  
-      Serial.println("OK");
-#endif
+      float weight = scale.get_units(5);
+      Serial.println(weight, 1);
 
     // Open Cover
     } else if (cmd == '6'){        
