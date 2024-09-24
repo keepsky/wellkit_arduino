@@ -116,11 +116,9 @@ void loop()
 
     // step 1 : calibration with known weight
     } else if (cmd == '4'){         
-        scale.tare();
-        data.offSet=scale.get_units(10);
-#ifdef DEBUG  
+      scale.tare();
+      data.offSet=scale.get_units(10);
       Serial.println("OK");
-#endif
 
     // step 2 : calibration with known weight
     } else if (cmd == '5'){         
@@ -132,16 +130,12 @@ void loop()
     // Open Cover
     } else if (cmd == '6'){        
       motor_open();
-#ifdef DEBUG  
-      Serial.println("Open Cover");
-#endif
+      Serial.println("OK");
 
     // Close Cover
     } else if (cmd == '7'){         
       motor_close();
-#ifdef DEBUG  
-      Serial.println("Close Cover");
-#endif
+      Serial.println("OK");
 
     // Get Cover status
     } else if (cmd == '8'){         
