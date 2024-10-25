@@ -31,15 +31,11 @@
 #define L298N_IN1   8
 #define L298N_IN2   7
 
-#ifdef DEBUG
-#define MOTOR_SPEED 50 //128
-#define MOTOR_DELAY 700
-#define MOTOR_SLOW_DELAY 20
-#else
 #define MOTOR_SPEED 50 //128
 #define MOTOR_DELAY 500
+#define MOTOR_DELAY_DELTA 40
 #define MOTOR_SLOW_DELAY 20
-#endif
+#define MOTOR_CAL_DELAY 40
 
 #define LBS_TO_GRAM   (453.6)
 
@@ -159,9 +155,15 @@ void loop()
     } else if (cmd == '0'){         
       reset_func();
 
-    // get zero factor value
-#ifdef DEBUG  
     } else if (cmd == 'a' || cmd == 'A'){         
+      motor_cal_open();
+
+    } else if (cmd == 'b' || cmd == 'B'){         
+      motor_cal_close();
+
+#ifdef DEBUG  
+    // get zero factor value
+    } else if (cmd == 'x' || cmd == 'X'){         
       test_proc_calibration();
 #endif
     // otherwise
@@ -198,15 +200,41 @@ void motor_init(void)
   analogWrite(L298N_ENA, 0);
 }
 
+void motor_cal_open(void)
+{
+#ifdef DEBUG 
+  Serial.println("motor_cal_open(): OK");
+#endif
+  digitalWrite(L298N_IN1, HIGH);
+  digitalWrite(L298N_IN2, LOW);
+  analogWrite(L298N_ENA, MOTOR_SPEED);
+  delay(MOTOR_CAL_DELAY);
+  analogWrite(L298N_ENA, 0);
+  digitalWrite(L298N_IN1, LOW);
+}
+
+void motor_cal_close(void)
+{
+#ifdef DEBUG 
+  Serial.println("motor_cal_close(): OK");
+#endif
+  digitalWrite(L298N_IN1, LOW);
+  digitalWrite(L298N_IN2, HIGH);
+  analogWrite(L298N_ENA, MOTOR_SPEED);
+  delay(MOTOR_CAL_DELAY);
+  analogWrite(L298N_ENA, 0);
+  digitalWrite(L298N_IN2, LOW);
+}
+
 void motor_open(void)
 {
+#ifdef DEBUG 
+  Serial.println("motor_open(): OK");
+#endif
   digitalWrite(L298N_IN1, HIGH);
   digitalWrite(L298N_IN2, LOW);
   analogWrite(L298N_ENA, MOTOR_SPEED);
   delay(MOTOR_DELAY);
-#ifdef DEBUG 
-  Serial.println("motor_open(): start slowly");
-#endif
   for (int i = MOTOR_SPEED; i > 0; i--)
   {
     analogWrite(L298N_ENA, i);
@@ -217,13 +245,13 @@ void motor_open(void)
 
 void motor_close(void)
 {
+#ifdef DEBUG 
+  Serial.println("motor_close(): OK");
+#endif
   digitalWrite(L298N_IN1, LOW);
   digitalWrite(L298N_IN2, HIGH);
   analogWrite(L298N_ENA, MOTOR_SPEED);
-  delay(MOTOR_DELAY);
-#ifdef DEBUG 
-  Serial.println("motor_close(): start slowly");
-#endif
+  delay(MOTOR_DELAY + MOTOR_DELAY_DELTA);
   for (int i = MOTOR_SPEED; i > 0; i--)
   {
     analogWrite(L298N_ENA, i);
