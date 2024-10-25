@@ -31,8 +31,15 @@
 #define L298N_IN1   8
 #define L298N_IN2   7
 
-#define MOTOR_SPEED 70 //128
-#define MOTOR_DELAY 200
+#ifdef DEBUG
+#define MOTOR_SPEED 50 //128
+#define MOTOR_DELAY 700
+#define MOTOR_SLOW_DELAY 20
+#else
+#define MOTOR_SPEED 50 //128
+#define MOTOR_DELAY 500
+#define MOTOR_SLOW_DELAY 20
+#endif
 
 #define LBS_TO_GRAM   (453.6)
 
@@ -153,9 +160,10 @@ void loop()
       reset_func();
 
     // get zero factor value
+#ifdef DEBUG  
     } else if (cmd == 'a' || cmd == 'A'){         
       test_proc_calibration();
-
+#endif
     // otherwise
     } else {
 #ifdef DEBUG  
@@ -202,7 +210,7 @@ void motor_open(void)
   for (int i = MOTOR_SPEED; i > 0; i--)
   {
     analogWrite(L298N_ENA, i);
-    delay(10);
+    delay(MOTOR_SLOW_DELAY);
   }
   analogWrite(L298N_ENA, 0);
 }
@@ -219,7 +227,7 @@ void motor_close(void)
   for (int i = MOTOR_SPEED; i > 0; i--)
   {
     analogWrite(L298N_ENA, i);
-    delay(10);
+    delay(MOTOR_SLOW_DELAY);
   }
   analogWrite(L298N_ENA, 0);
 }
@@ -247,9 +255,9 @@ void proc_calibration(int weight)
 }
 
 
+#ifdef DEBUG 
 
 #define OBJECT  500
-
 
 void test_proc_calibration(void)
 {
@@ -305,4 +313,4 @@ void test_proc_calibration(void)
     data.offSet=scaleOffset; 
     save_struct(0, data);//Save to eeprom   
 }
-
+#endif
