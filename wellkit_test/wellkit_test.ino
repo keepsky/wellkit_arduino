@@ -31,8 +31,8 @@
 #define L298N_IN1   8
 #define L298N_IN2   7
 
-#define MOTOR_SPEED 128
-#define MOTOR_DELAY 500
+#define MOTOR_SPEED 70 //128
+#define MOTOR_DELAY 200
 
 #define LBS_TO_GRAM   (453.6)
 
