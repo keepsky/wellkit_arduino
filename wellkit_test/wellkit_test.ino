@@ -16,6 +16,9 @@
    D9 -> L298N ENA (PWM)
    5V -> L298N_5V (note) or VIN <- L298N_5V   
    GND -> GND (from external power source) 
+
+   D4 -> Magnetic(OUT)
+   5V -> Magnetic(IN)
  
 */
 
@@ -30,6 +33,8 @@
 #define L298N_ENA   9 // PWM
 #define L298N_IN1   8
 #define L298N_IN2   7
+#define MAG_IN      4
+
 
 #define MOTOR_SPEED 50 //128
 #define MOTOR_DELAY 500
@@ -62,6 +67,7 @@ void setup()
   delay(2000);
 
   pinMode(LED_BUILTIN, OUTPUT);
+  pinMode(MAG_IN, INPUT);
 
   motor_init();
 
@@ -189,6 +195,15 @@ void blink_builtin_led(int duration, int num)
 }
 #endif
 
+int check_door_sensor(void)
+{
+  int sw = digitalRead(MAG_IN);
+  if(sw == HIGH)
+    return 1;
+
+  return 0;
+}
+
 void motor_init(void)
 {
   pinMode(L298N_ENA, OUTPUT);
@@ -256,6 +271,8 @@ void motor_close(void)
   {
     analogWrite(L298N_ENA, i);
     delay(MOTOR_SLOW_DELAY);
+    if(check_door_sensor() == 1)
+      break;
   }
   analogWrite(L298N_ENA, 0);
 }
