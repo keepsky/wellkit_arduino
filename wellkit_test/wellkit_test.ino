@@ -148,10 +148,10 @@ void loop()
 
     // Get Cover status
     } else if (cmd == '8'){         
-#ifdef DEBUG  
-      Serial.println("get cover status");
-#endif
-
+      if(check_door_sensor())
+        Serial.println("1");
+      else
+        Serial.println("0");
     // get zero factor value
     } else if (cmd == '9'){         
       long zero_factor = scale.read_average();
