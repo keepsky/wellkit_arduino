@@ -20,6 +20,8 @@
    D4 -> Magnetic(OUT)
    5V -> Magnetic(IN)
  
+ HX711 Library (0.5.0)
+  Rob Tillaart <rob.tillaart@gmail.com>
 */
 
 #include <EEPROM.h> 
@@ -299,7 +301,7 @@ void motor_close(void)
   {
     analogWrite(L298N_ENA, i);
     delay(MOTOR_SLOW_DELAY);
-    
+
     if(check_door_sensor())
       break;
   }
