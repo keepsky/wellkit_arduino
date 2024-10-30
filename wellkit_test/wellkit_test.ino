@@ -42,6 +42,7 @@
 #define MOTOR_DELAY 500
 #define MOTOR_DELAY_DELTA 40
 #define MOTOR_SLOW_DELAY 20
+#define MOTOR_JITTER_DELAY 100
 #define MOTOR_CAL_DELAY 40
 
 #define LBS_TO_GRAM   (453.6)
@@ -174,11 +175,13 @@ void loop()
       reset_func();
 
     } else if (cmd == 'a' || cmd == 'A'){         
-      test_motor_sensor();
       motor_cal_open();
 
     } else if (cmd == 'b' || cmd == 'B'){         
       motor_cal_close();
+
+    } else if (cmd == 'c' || cmd == 'C'){         
+      test_motor_sensor();
 
 #ifdef DEBUG  
     // get zero factor value
@@ -217,7 +220,17 @@ void blink_builtin_led(int duration, int num)
 // return HIGH(1) if closed else return LOW(0)
 int check_door_sensor(void)
 {
-  return digitalRead(MAG_IN);
+  if(digitalRead(MAG_IN)==LOW)
+    return 0;
+  if(digitalRead(MAG_IN)==LOW)
+    return 0;
+  if(digitalRead(MAG_IN)==LOW)
+    return 0;
+  if(digitalRead(MAG_IN)==LOW)
+    return 0;
+    
+  return 1;
+  //return digitalRead(MAG_IN);
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -289,7 +302,7 @@ void motor_open(void)
 ////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////
 
-void motor_close(void)
+void motor_close_(void)
 {
 #ifdef DEBUG 
   Serial.println("motor_close(): OK");
@@ -304,11 +317,38 @@ void motor_close(void)
     delay(MOTOR_SLOW_DELAY);
 
     if(check_door_sensor())
+    {
+      delay(MOTOR_JITTER_DELAY);
       break;
+    }
   }
   analogWrite(L298N_ENA, 0);
 }
 
+////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////
+
+void motor_close(void)
+{
+#ifdef DEBUG 
+  Serial.println("motor_close(): OK");
+#endif
+  digitalWrite(L298N_IN1, LOW);
+  digitalWrite(L298N_IN2, HIGH);
+  analogWrite(L298N_ENA, MOTOR_SPEED);
+
+  int cnt=0;
+  while(cnt++ < 20)
+  {
+    delay(50);
+    if(check_door_sensor())
+    {
+      delay(MOTOR_JITTER_DELAY);
+      break;
+    }    
+  }
+  analogWrite(L298N_ENA, 0);
+}
 ////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////
 
