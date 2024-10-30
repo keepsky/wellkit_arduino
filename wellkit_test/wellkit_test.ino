@@ -174,6 +174,7 @@ void loop()
       reset_func();
 
     } else if (cmd == 'a' || cmd == 'A'){         
+      test_motor_sensor();
       motor_cal_open();
 
     } else if (cmd == 'b' || cmd == 'B'){         
@@ -341,6 +342,31 @@ void proc_calibration(int weight)
 ////////////////////////////////////////////////////////////////////
 
 #ifdef DEBUG 
+
+void test_motor_sensor(void)
+{
+#ifdef DEBUG 
+  Serial.println("motor_close(): OK");
+#endif
+
+  digitalWrite(L298N_IN1, LOW);
+  digitalWrite(L298N_IN2, HIGH);
+  analogWrite(L298N_ENA, MOTOR_SPEED);
+
+  while(1)
+  {
+    if(check_door_sensor())
+    {
+      analogWrite(L298N_ENA, 0);
+    }
+    else
+    {
+      analogWrite(L298N_ENA, MOTOR_SPEED);
+    }
+  }
+  analogWrite(L298N_ENA, 0);
+}
+
 
 #define OBJECT  500
 
