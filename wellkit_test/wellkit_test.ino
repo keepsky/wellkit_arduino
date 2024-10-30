@@ -220,17 +220,18 @@ void blink_builtin_led(int duration, int num)
 // return HIGH(1) if closed else return LOW(0)
 int check_door_sensor(void)
 {
-  if(digitalRead(MAG_IN)==LOW)
-    return 0;
-  if(digitalRead(MAG_IN)==LOW)
-    return 0;
-  if(digitalRead(MAG_IN)==LOW)
-    return 0;
-  if(digitalRead(MAG_IN)==LOW)
-    return 0;
-    
+#if 1  
+  for(int i=0;i<7;i++)
+  {
+    if(digitalRead(MAG_IN)==LOW)
+      return 0;
+    delay(1);
+  }
+
   return 1;
-  //return digitalRead(MAG_IN);
+#else  
+  return digitalRead(MAG_IN);
+#endif  
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -338,7 +339,7 @@ void motor_close(void)
   analogWrite(L298N_ENA, MOTOR_SPEED);
 
   int cnt=0;
-  while(cnt++ < 20)
+  while(cnt++ < 30)
   {
     delay(50);
     if(check_door_sensor())
@@ -348,6 +349,10 @@ void motor_close(void)
     }    
   }
   analogWrite(L298N_ENA, 0);
+#ifdef DEBUG 
+  Serial.print("motor_close(): cnt = ");
+  Serial.println(cnt);
+#endif  
 }
 ////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////
