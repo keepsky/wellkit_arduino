@@ -30,6 +30,9 @@
 #define VERSION   101
 #define DEBUG
 
+////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////
+
 #define HX711_DOUT  3
 #define HX711_CLK   2
 #define L298N_ENA   9 // PWM
@@ -37,15 +40,17 @@
 #define L298N_IN2   7
 #define MAG_IN      4
 
+////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////
 
-#define MOTOR_SPEED 50 //128
-#define MOTOR_DELAY 500
-#define MOTOR_DELAY_DELTA 40
-#define MOTOR_SLOW_DELAY 20
-#define MOTOR_JITTER_DELAY 100
-#define MOTOR_CAL_DELAY 40
+#define MOTOR_SPEED 50          //128
+#define MOTOR_DELAY 500         // 모터 open시 기본 이동 delay 
+#define MOTOR_SLOW_DELAY 20     // 마지막 단계에서 모터 저속 운전을 위한 delay
+#define MOTOR_JITTER_DELAY 100  // 모터 센서 감지후 추가 이동을 위한 delay
+#define MOTOR_CAL_DELAY 40    // 모터 위치 이동 보정을 위한 delay
+#define MOTOR_LIMIT_CNT 30    // 모터 close시 센서 오류를 보정하기 위한 max 카운트
 
-#define LBS_TO_GRAM   (453.6)
+#define LBS_TO_GRAM   (453.6)     // 미사용
 
 ////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////
@@ -60,8 +65,8 @@ struct wellkit data;
 
 HX711 scale;
 
-float factor = 246.84;
-long offset = -239664;
+float factor = 246.84;    // calibration 전 기본값
+long offset = -239664;    // calibration 전 기본값
 
 int status;
 
@@ -161,9 +166,9 @@ void loop()
     // Get Cover status
     } else if (cmd == '8'){         
       if(check_door_sensor())
-        Serial.println("1");
+        Serial.println("1");  // close
       else
-        Serial.println("0");
+        Serial.println("0");  // open
 
     // get zero factor value
     } else if (cmd == '9'){         
@@ -193,8 +198,8 @@ void loop()
 #ifdef DEBUG  
       Serial.println("error");
 #endif
-    }
-    delay(100);
+    }    
+    delay(10);
   }
 }
 
@@ -311,7 +316,7 @@ void motor_close_(void)
   digitalWrite(L298N_IN1, LOW);
   digitalWrite(L298N_IN2, HIGH);
   analogWrite(L298N_ENA, MOTOR_SPEED);
-  delay(MOTOR_DELAY + MOTOR_DELAY_DELTA);
+  delay(MOTOR_DELAY);
   for (int i = MOTOR_SPEED; i > 0; i--)
   {
     analogWrite(L298N_ENA, i);
@@ -339,7 +344,7 @@ void motor_close(void)
   analogWrite(L298N_ENA, MOTOR_SPEED);
 
   int cnt=0;
-  while(cnt++ < 30)
+  while(cnt++ < MOTOR_LIMIT_CNT)
   {
     delay(50);
     if(check_door_sensor())
