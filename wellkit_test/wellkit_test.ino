@@ -46,9 +46,10 @@
 #define MOTOR_SPEED 50          //128
 #define MOTOR_DELAY 500         // 모터 open시 기본 이동 delay 
 #define MOTOR_SLOW_DELAY 20     // 마지막 단계에서 모터 저속 운전을 위한 delay
-#define MOTOR_JITTER_DELAY 100  // 모터 센서 감지후 추가 이동을 위한 delay
 #define MOTOR_CAL_DELAY 40    // 모터 위치 이동 보정을 위한 delay
-#define MOTOR_LIMIT_CNT 30    // 모터 close시 센서 오류를 보정하기 위한 max 카운트
+
+#define MOTOR_JITTER_DELAY 100  // 모터 close시 센서 감지후 추가 이동을 위한 delay (with sensor)
+#define MOTOR_LIMIT_CNT 30    // 모터 close시 센서 오류를 보정하기 위한 max 카운트 (with sensor)
 
 #define LBS_TO_GRAM   (453.6)     // 미사용
 
@@ -163,12 +164,17 @@ void loop()
       motor_close();
       Serial.println("OK");
 
+    // Close Cover with sensor
+    } else if (cmd == 'm' || cmd == 'M'){         
+      motor_close_sensor();
+      Serial.println("OK");
+
     // Get Cover status
     } else if (cmd == '8'){         
       if(check_door_sensor())
-        Serial.println("1");  // close
+        Serial.println("0");  // close
       else
-        Serial.println("0");  // open
+        Serial.println("1");  // open
 
     // get zero factor value
     } else if (cmd == '9'){         
@@ -308,7 +314,7 @@ void motor_open(void)
 ////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////
 
-void motor_close_(void)
+void motor_close(void)
 {
 #ifdef DEBUG 
   Serial.println("motor_close(): OK");
@@ -321,12 +327,6 @@ void motor_close_(void)
   {
     analogWrite(L298N_ENA, i);
     delay(MOTOR_SLOW_DELAY);
-
-    if(check_door_sensor())
-    {
-      delay(MOTOR_JITTER_DELAY);
-      break;
-    }
   }
   analogWrite(L298N_ENA, 0);
 }
@@ -334,10 +334,10 @@ void motor_close_(void)
 ////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////
 
-void motor_close(void)
+void motor_close_sensor(void)
 {
 #ifdef DEBUG 
-  Serial.println("motor_close(): OK");
+  Serial.println("motor_close_sensor(): OK");
 #endif
   digitalWrite(L298N_IN1, LOW);
   digitalWrite(L298N_IN2, HIGH);
@@ -355,7 +355,7 @@ void motor_close(void)
   }
   analogWrite(L298N_ENA, 0);
 #ifdef DEBUG 
-  Serial.print("motor_close(): cnt = ");
+  Serial.print("motor_close_sensor(): cnt = ");
   Serial.println(cnt);
 #endif  
 }
