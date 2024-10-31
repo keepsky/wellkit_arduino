@@ -45,7 +45,7 @@
 
 #define MOTOR_SPEED 250 //50          //128
 #define MOTOR_DELAY_OPEN 230 //500         // 모터 open시 기본 이동 delay 
-#define MOTOR_DELAY_CLOSE 110 //500         // 모터 open시 기본 이동 delay 
+#define MOTOR_DELAY_CLOSE 110 //500         // 모터 close시 기본 이동 delay 
 #define MOTOR_SLOW_DELAY 20     // 마지막 단계에서 모터 저속 운전을 위한 delay
 #define MOTOR_CAL_DELAY 40    // 모터 위치 이동 보정을 위한 delay
 
@@ -120,92 +120,140 @@ void setup()
 char cmd;
 void loop() 
 {
-  // put your main code here, to run repeatedly:
-  if(Serial.available()){
-    cmd = Serial.read();
+  //while(1)
+  {
+    // put your main code here, to run repeatedly:
+    if(Serial.available()){
+      cmd = Serial.read();
 #ifdef DEBUG 
-    blink_builtin_led(100, 1);
+      Serial.print("cmd : ");
+      Serial.println(cmd);
+      blink_builtin_led(100, 1);
 #endif    
 
-    // get weight
-    if (cmd == '1') {               
-      // load cell에서 무게 정보를 읽어와서 출력하는 코드 필요
-      float weight = scale.get_units(5);
-      //weight = weight * LBS_TO_GRAM;
-      Serial.println(weight, 1);
+      switch(cmd)
+      {
+        case '0':
+        {
+          reset_func();
+          break;
+        }
+        case '1':
+        {
+          // get weight from loadcell
+          // load cell에서 무게 정보를 읽어와서 출력
+          float weight = scale.get_units(5);
+          //weight = weight * LBS_TO_GRAM;
+          Serial.println(weight, 1);
+          break;
+        }
+        case '2':
+        {
+          // get calibration value (scala factor)
+          Serial.println(data.scala);
+          break;
+        }
+        case '3':
+        {
+          // get calibration value (offset)
+          Serial.println(data.offSet);
+          break;
+        }
+        case '4':
+        {
+          // step 1 : calibration with known weight (1단계 : 저울에 물체를 모두 치우고 명령 수행)
+          scale.tare();
+          data.offSet=scale.get_units(10);
+          Serial.println("OK");
+          break;
+        }
+        case '5':
+        {
+          // step 2 : calibration with known weight (2단계 : 저울에 물체를 올리고 명령 수행)
+          int value = Serial.parseInt();
+          proc_calibration(value);
+          float weight = scale.get_units(5);
+          Serial.println(weight, 1);
+          break;
+        }
+        case '6':
+        {
+          // Open Cover
+          motor_open();
+          Serial.println("OK");
+          break;
+        }
+        case '7':
+        {
+          // Close Cover
+          motor_close();
+          Serial.println("OK");
+          break;
+        }
+        case 'm': case 'M':
+        {
+          // Open Cover with sensor
+          motor_close_sensor();
+          Serial.println("OK");
+          break;
+        }
+        case '8':
+        {
+          // Get Cover status
+          if(check_door_sensor())
+            Serial.println("0");  // close
+          else
+            Serial.println("1");  // open
 
-    // get calibration value (scala)
-    } else if (cmd == '2'){         
-      Serial.println(data.scala);
-
-    // get calibration value (offset)
-    } else if (cmd == '3'){         
-      Serial.println(data.offSet);
-
-    // step 1 : calibration with known weight
-    } else if (cmd == '4'){         
-      scale.tare();
-      data.offSet=scale.get_units(10);
-      Serial.println("OK");
-
-    // step 2 : calibration with known weight
-    } else if (cmd == '5'){         
-      int value = Serial.parseInt();
-      proc_calibration(value);
-      float weight = scale.get_units(5);
-      Serial.println(weight, 1);
-
-    // Open Cover
-    } else if (cmd == '6'){        
-      motor_open();
-      Serial.println("OK");
-
-    // Close Cover
-    } else if (cmd == '7'){         
-      motor_close();
-      Serial.println("OK");
-
-    // Close Cover with sensor
-    } else if (cmd == 'm' || cmd == 'M'){         
-      motor_close_sensor();
-      Serial.println("OK");
-
-    // Get Cover status
-    } else if (cmd == '8'){         
-      if(check_door_sensor())
-        Serial.println("0");  // close
-      else
-        Serial.println("1");  // open
-
-    // get zero factor value
-    } else if (cmd == '9'){         
-      long zero_factor = scale.read_average();
-      Serial.println(zero_factor);
-
-    // reset board
-    } else if (cmd == '0'){         
-      reset_func();
-
-    } else if (cmd == 'a' || cmd == 'A'){         
-      motor_cal_open();
-
-    } else if (cmd == 'b' || cmd == 'B'){         
-      motor_cal_close();
-
-    } else if (cmd == 'c' || cmd == 'C'){         
-      test_motor_sensor();
-
+          break;
+        }
+        case '9':
+        {
+          // get zero factor value for scale
+          long zero_factor = scale.read_average();
+          Serial.println(zero_factor);
+          break;
+        }
+        case 'a': case 'A':
+        {
+          // Open motor 1-step
+          motor_open_step();
+          break;
+        }
+        case 'b': case 'B':
+        {
+          // Close motor 1-step
+          motor_close_step();
+          break;
+        }
+#ifdef DEBUG       
+        case 'c': case 'C':
+        {
+          // Test routine for motor and sensor
+          test_motor_sensor();
+          break;
+        }
+#endif      
 #ifdef DEBUG  
-    // get zero factor value
-    } else if (cmd == 'x' || cmd == 'X'){         
-      test_proc_calibration();
+        case 'x': case 'X':
+        {
+          // Test routine for scale
+          test_proc_calibration();
+          break;
+        }
 #endif
-    // otherwise
-    } else {
+        default:
 #ifdef DEBUG  
-      Serial.println("error");
+          Serial.println("error");
 #endif
-    }    
+          break;
+      }
+
+    }
+    else
+    {
+      //Serial.println("serial error");
+    }
     delay(10);
   }
 }
@@ -263,7 +311,7 @@ void motor_init(void)
 ////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////
 
-void motor_cal_open(void)
+void motor_open_step(void)
 {
 #ifdef DEBUG 
   Serial.println("motor_cal_open(): OK");
@@ -279,7 +327,7 @@ void motor_cal_open(void)
 ////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////
 
-void motor_cal_close(void)
+void motor_close_step(void)
 {
 #ifdef DEBUG 
   Serial.println("motor_cal_close(): OK");
