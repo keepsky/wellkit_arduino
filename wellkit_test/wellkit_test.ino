@@ -43,8 +43,9 @@
 ////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////
 
-#define MOTOR_SPEED 50          //128
-#define MOTOR_DELAY 500         // 모터 open시 기본 이동 delay 
+#define MOTOR_SPEED 250 //50          //128
+#define MOTOR_DELAY_OPEN 230 //500         // 모터 open시 기본 이동 delay 
+#define MOTOR_DELAY_CLOSE 110 //500         // 모터 open시 기본 이동 delay 
 #define MOTOR_SLOW_DELAY 20     // 마지막 단계에서 모터 저속 운전을 위한 delay
 #define MOTOR_CAL_DELAY 40    // 모터 위치 이동 보정을 위한 delay
 
@@ -302,7 +303,7 @@ void motor_open(void)
   digitalWrite(L298N_IN1, HIGH);
   digitalWrite(L298N_IN2, LOW);
   analogWrite(L298N_ENA, MOTOR_SPEED);
-  delay(MOTOR_DELAY);
+  delay(MOTOR_DELAY_OPEN);
   for (int i = MOTOR_SPEED; i > 0; i--)
   {
     analogWrite(L298N_ENA, i);
@@ -322,7 +323,7 @@ void motor_close(void)
   digitalWrite(L298N_IN1, LOW);
   digitalWrite(L298N_IN2, HIGH);
   analogWrite(L298N_ENA, MOTOR_SPEED);
-  delay(MOTOR_DELAY);
+  delay(MOTOR_DELAY_CLOSE);
   for (int i = MOTOR_SPEED; i > 0; i--)
   {
     analogWrite(L298N_ENA, i);
