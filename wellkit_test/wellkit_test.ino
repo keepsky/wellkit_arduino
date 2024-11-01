@@ -38,7 +38,7 @@
 #define L298N_ENA   9 // PWM
 #define L298N_IN1   8
 #define L298N_IN2   7
-#define MAG_IN      4
+#define MAG_IN      4  // 다른 핀은 아두이노 GND에 연결
 
 ////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////
@@ -83,7 +83,7 @@ void setup()
   delay(2000);
 
   pinMode(LED_BUILTIN, OUTPUT);
-  pinMode(MAG_IN, INPUT);
+  pinMode(MAG_IN, INPUT_PULLUP);
 
   motor_init();
 
@@ -201,9 +201,9 @@ void loop()
         {
           // Get Cover status
           if(check_door_sensor())
-            Serial.println("0");  // close
+            Serial.println("1");  // close
           else
-            Serial.println("1");  // open
+            Serial.println("0");  // open
 
           break;
         }
@@ -277,18 +277,22 @@ void blink_builtin_led(int duration, int num)
 // return HIGH(1) if closed else return LOW(0)
 int check_door_sensor(void)
 {
-#if 1  
-  for(int i=0;i<7;i++)
+#if 0 // for test magneic sensor  
+  while(1)
   {
-    if(digitalRead(MAG_IN)==LOW)
-      return 0;
-    delay(1);
+    if(digitalRead(MAG_IN) == LOW)
+      digitalWrite(LED_BUILTIN, HIGH);
+    else
+      digitalWrite(LED_BUILTIN, LOW);
+    
+    delay(10);
   }
+#endif
 
-  return 1;
-#else  
-  return digitalRead(MAG_IN);
-#endif  
+  if(digitalRead(MAG_IN) == LOW)
+    return 1;
+
+  return 0;
 }
 
 ////////////////////////////////////////////////////////////////////
