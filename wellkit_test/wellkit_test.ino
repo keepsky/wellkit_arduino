@@ -17,8 +17,8 @@
    5V -> L298N_5V (note) or VIN <- L298N_5V   
    GND -> GND (from external power source) 
 
-   D4 -> Magnetic(OUT)
-   5V -> Magnetic(IN)
+   D4  -> Magnetic(OUT)
+   GND -> Magnetic(IN)
  
  HX711 Library (0.5.0)
   Rob Tillaart <rob.tillaart@gmail.com>
