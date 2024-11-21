@@ -28,7 +28,7 @@
 #include "HX711.h"
 
 #define VERSION   101
-#define DEBUG
+//#define DEBUG
 
 ////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////
@@ -128,8 +128,8 @@ void loop()
 #ifdef DEBUG 
       Serial.print("cmd : ");
       Serial.println(cmd);
-      blink_builtin_led(100, 1);
 #endif    
+      blink_builtin_led(100, 1);
 
       switch(cmd)
       {
@@ -201,9 +201,9 @@ void loop()
         {
           // Get Cover status
           if(check_door_sensor())
-            Serial.println("1");  // close
+            Serial.println("0");  // close
           else
-            Serial.println("0");  // open
+            Serial.println("1");  // open
 
           break;
         }
@@ -258,7 +258,6 @@ void loop()
 ////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////
 
-#ifdef DEBUG 
 void blink_builtin_led(int duration, int num)
 {
   for(int i=0;i<num;i++)
@@ -269,7 +268,6 @@ void blink_builtin_led(int duration, int num)
     delay(duration);               
   }
 }
-#endif
 
 ////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////
