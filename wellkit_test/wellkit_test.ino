@@ -43,6 +43,8 @@
 ////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////
 
+
+#ifdef DEBUG
 #define MOTOR_SPEED 250 //50          //128
 #define MOTOR_DELAY_OPEN 2800         // 모터 open시 기본 이동 delay 
 #define MOTOR_DELAY_CLOSE 2800 //500         // 모터 close시 기본 이동 delay 
@@ -52,6 +54,16 @@
 #define MOTOR_JITTER_DELAY 110  // 모터 close시 센서 감지후 추가 이동을 위한 delay (with sensor)
 #define MOTOR_LIMIT_CNT 55    // 모터 close시 센서 오류를 보정하기 위한 max 카운트 (with sensor)
 
+#else
+#define MOTOR_SPEED 250 //50          //128
+#define MOTOR_DELAY_OPEN 4000 //2800         // 모터 open시 기본 이동 delay 
+#define MOTOR_DELAY_CLOSE 4000 //2800 //500         // 모터 close시 기본 이동 delay 
+#define MOTOR_SLOW_DELAY 20     // 마지막 단계에서 모터 저속 운전을 위한 delay
+#define MOTOR_CAL_DELAY 40    // 모터 위치 이동 보정을 위한 delay
+
+#define MOTOR_JITTER_DELAY 220 //110  // 모터 close시 센서 감지후 추가 이동을 위한 delay (with sensor)
+#define MOTOR_LIMIT_CNT 75    // 모터 close시 센서 오류를 보정하기 위한 max 카운트 (with sensor)
+#endif
 #define LBS_TO_GRAM   (453.6)     // 미사용
 
 ////////////////////////////////////////////////////////////////////
